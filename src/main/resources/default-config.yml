@@ -1,0 +1,5 @@
+# The address to listen on
+bind-address: :25566
+# A list of servers that events will be passed on to.
+link-servers:
+ - server.address.example.com:25566
