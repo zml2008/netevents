@@ -75,7 +75,6 @@ public class EventPacket implements Packet {
         oos.flush();
         oos.close();
 
-        final byte[] bytes = baos.toByteArray();
         ByteBuffer buf = ByteBuffer.wrap(baos.toByteArray());
         buf.position(buf.limit());
         return buf;

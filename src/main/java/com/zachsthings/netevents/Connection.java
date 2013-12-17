@@ -2,6 +2,7 @@ package com.zachsthings.netevents;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -16,16 +17,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Represents a single connection
  */
 public class Connection implements Closeable {
+    private final NetEventsPlugin plugin;
+    // State tracking
     private final AtomicBoolean disconnectHandled = new AtomicBoolean();
     private final List<Runnable> closeListeners = new CopyOnWriteArrayList<Runnable>();
-    private final NetEventsPlugin plugin;
+    // Connection objects
     private final SocketChannel chan;
     private final OutputThread out;
     private final InputThread in;
+    private final SocketAddress remoteAddress;
 
     public Connection(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
         this.plugin = plugin;
         this.chan = chan;
+        this.remoteAddress = chan.getRemoteAddress();
+        if (remoteAddress == null) {
+            System.out.println("Null remote address for " + chan);
+        }
         this.out = new OutputThread(this);
         this.in = new InputThread(this, plugin);
         out.start();
@@ -56,6 +64,10 @@ public class Connection implements Closeable {
 
     SocketChannel getChannel() {
         return chan;
+    }
+
+    public SocketAddress getRemoteAddress() {
+        return remoteAddress;
     }
 
     public void addCloseListener(Runnable listener) {

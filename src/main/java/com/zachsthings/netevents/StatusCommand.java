@@ -35,7 +35,7 @@ public class StatusCommand implements CommandExecutor {
         for (Forwarder f : plugin.getForwarders()) {
             if (f.isActive()) {
                 sender.sendMessage(text("- ", hl(f.getRemoteAddress().toString())));
-            } else {
+            } else if (f.getRemoteAddress() != null) {
                 sender.sendMessage(text("- ", ChatColor.RED + f.getRemoteAddress().toString()));
             }
         }

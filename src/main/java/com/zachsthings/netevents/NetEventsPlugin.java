@@ -10,7 +10,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.logging.Level;
@@ -18,12 +17,12 @@ import java.util.logging.Level;
 public class NetEventsPlugin extends JavaPlugin {
     // Number of event UUID's to keep to prevent duplicate events. Greater number potentially decreases duplicate events received
     public static final int EVENT_CACHE_COUNT = 5000;
-    public static final int DEFAULT_PORT = 25566;
 
     private final LinkedList<UUID> processedEvents = new LinkedList<UUID>();
     private final Map<SocketAddress, Forwarder> forwarders = new HashMap<SocketAddress, Forwarder>();
     private Receiver receiver;
     private PacketHandlerQueue handlerQueue;
+    private NetEventsConfig config;
 
     @Override
     public void onEnable() {
@@ -60,6 +59,18 @@ public class NetEventsPlugin extends JavaPlugin {
         handlerQueue.cancel();
     }
 
+    @Override
+    public void reloadConfig() {
+        super.reloadConfig();
+        this.config = new NetEventsConfig(getConfig());
+    }
+
+    public void reload() throws IOException {
+        close();
+        reloadConfig();
+        connect();
+    }
+
     private void close() throws IOException {
        if (receiver != null) {
             receiver.close();
@@ -72,15 +83,19 @@ public class NetEventsPlugin extends JavaPlugin {
     }
 
     private void connect() throws IOException {
-        if (receiver != null) {
+        if (receiver == null) {
+            receiver = new Receiver(this, config.getListenAddress());
             receiver.bind();
         }
-        for (Forwarder conn : forwarders.values()) {
+
+        for (SocketAddress addr : config.getConnectAddresses()) {
+            Forwarder fwd = new Forwarder(this);
             try {
-                conn.connect();
+                fwd.connect(addr);
             } catch (IOException ex) {
-                getLogger().log(Level.SEVERE, "Unable to connect to remote server " + conn.getRemoteAddress(), ex);
+                getLogger().log(Level.SEVERE, "Unable to connect to remote server " + addr + " (will keep trying)", ex);
             }
+            addForwarder(fwd);
         }
     }
 
@@ -96,29 +111,12 @@ public class NetEventsPlugin extends JavaPlugin {
         forwarders.remove(f.getRemoteAddress());
     }
 
-    @Override
-    public void reloadConfig() {
-        super.reloadConfig();
-
-        final InetSocketAddress addr = toSocketAddr(getConfig().getString("listen-at"));
-        receiver = new Receiver(this, addr);
-
-        final List<String> forwardAddresses = getConfig().getStringList("forward-to");
-        for (String forwardTo : forwardAddresses) {
-            addForwarder(new Forwarder(this, toSocketAddr(forwardTo), true));
-        }
+    Collection<Forwarder> getForwarders() {
+        return forwarders.values();
     }
 
-    public void reload() throws IOException {
-        close();
-        reloadConfig();
-        connect();
-    }
-
-    private InetSocketAddress toSocketAddr(String addr) {
-        final String[] listenAddr = addr.split(":");
-
-        return new InetSocketAddress(listenAddr[0], listenAddr.length > 1 ? Integer.parseInt(listenAddr[1]) : DEFAULT_PORT);
+    public SocketAddress getBoundAddress() {
+        return receiver.getBoundAddress();
     }
 
     public <T extends Event & Serializable> T callEvent(T event) {
@@ -137,22 +135,11 @@ public class NetEventsPlugin extends JavaPlugin {
         getServer().getPluginManager().callEvent(packet.getSendEvent());
 
         for (Forwarder f : forwarders.values()) {
-            try {
-                if (f.getRemoteAddress().equals(ignoreTo.getChannel().getRemoteAddress())) {
+                if (ignoreTo != null && ignoreTo.getRemoteAddress().equals(f.getRemoteAddress())) {
                     continue;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             f.write(packet);
         }
     }
 
-    Collection<Forwarder> getForwarders() {
-        return forwarders.values();
-    }
-
-    public SocketAddress getBoundAddress() {
-        return receiver.getBoundAddress();
-    }
 }

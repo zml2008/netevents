@@ -12,25 +12,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class Forwarder implements Closeable {
     private final NetEventsPlugin plugin;
-    private final SocketAddress connectAddress;
     private final AtomicReference<Connection> conn = new AtomicReference<Connection>();
-    private final boolean reconnect;
+    private SocketAddress reconnectAddress;
 
-    /**
-     * @param connectAddress The address to connect to.
-     * @param reconnect      Whether to reconnect. Should be true for manually-specified servers, not for autodetected ones
-     */
-    public Forwarder(NetEventsPlugin plugin, SocketAddress connectAddress, boolean reconnect) {
+    public Forwarder(NetEventsPlugin plugin) {
         this.plugin = plugin;
-        this.connectAddress = connectAddress;
-        this.reconnect = reconnect;
-    }
-
-    Forwarder(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
-        this(plugin, chan.getRemoteAddress(), false);
-        final Connection conn = new Connection(plugin, chan);
-        conn.addCloseListener(new ConnectionCloseListener());
-        this.conn.set(conn);
     }
 
     class ConnectionCloseListener implements Runnable {
@@ -41,24 +27,27 @@ class Forwarder implements Closeable {
         }
     }
 
-    public void connect() throws IOException {
-        if (!reconnect) { // This socket can only be connected once, don't bother
-            return;
-        }
-
-        close();
+    public void connect(SocketAddress addr) throws IOException {
+        reconnectAddress = addr;
         final SocketChannel sock;
         try {
-        sock = SocketChannel.open(connectAddress);
+            sock = SocketChannel.open(addr);
         } catch (UnresolvedAddressException e) {
-            throw new IOException("Unknown host: " + connectAddress);
+            throw new IOException("Unknown host: " + addr);
         }
-        Connection.configureSocketChannel(sock);
+        connect(sock);
+        reconnectAddress = addr;
+    }
 
-        final Connection conn = new Connection(plugin, sock);
-        conn.addCloseListener(new ConnectionCloseListener());
+    public void connect(SocketChannel chan) throws IOException {
+        Connection.configureSocketChannel(chan);
+
+        final Connection conn = new Connection(plugin, chan);
         if (!this.conn.compareAndSet(null, conn)) { // Already been connected
             conn.close();
+        } else {
+            conn.addCloseListener(new ConnectionCloseListener());
+            reconnectAddress = null; // Clear it out just in case
         }
     }
 
@@ -67,6 +56,7 @@ class Forwarder implements Closeable {
         if (conn != null) {
             conn.close();
         }
+        reconnectAddress = null;
     }
 
     public void write(Packet packet) {
@@ -81,15 +71,19 @@ class Forwarder implements Closeable {
     }
 
     public SocketAddress getRemoteAddress() {
-        return connectAddress;
-    }
+        final Connection conn = this.conn.get();
+        if (conn != null) {
+            return conn.getRemoteAddress();
+        } else {
+            return reconnectAddress;
+        }
+   }
 
     @Override
     public String toString() {
         return "Forwarder{" +
-                "connectAddress=" + connectAddress +
-                ", conn=" + conn +
-                ", reconnect=" + reconnect +
+                "conn=" + conn +
+                ", reconnectAddress=" + reconnectAddress +
                 '}';
     }
 }

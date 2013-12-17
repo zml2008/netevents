@@ -45,7 +45,8 @@ public class Receiver implements Closeable {
                 while (server.isOpen()) {
                     SocketChannel client = server.accept();
                     Connection.configureSocketChannel(client);
-                    Forwarder forward = new Forwarder(plugin, client);
+                    Forwarder forward = new Forwarder(plugin);
+                    forward.connect(client);
                     plugin.addForwarder(forward);
                 }
             } catch (ClosedChannelException ignore) {
