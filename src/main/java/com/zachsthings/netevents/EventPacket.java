@@ -62,7 +62,7 @@ public class EventPacket implements Packet {
 
     @Override
     public void handle(Connection conn) {
-        conn.getPlugin().callEvent(this);
+        conn.getPlugin().callEvent(this, conn);
     }
 
     public ByteBuffer write() throws IOException {

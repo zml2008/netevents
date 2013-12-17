@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -20,7 +21,7 @@ public class NetEventsPlugin extends JavaPlugin {
     public static final int DEFAULT_PORT = 25566;
 
     private final LinkedList<UUID> processedEvents = new LinkedList<UUID>();
-    private final Set<Forwarder> forwarders = new HashSet<Forwarder>();
+    private final Map<SocketAddress, Forwarder> forwarders = new HashMap<SocketAddress, Forwarder>();
     private Receiver receiver;
     private PacketHandlerQueue handlerQueue;
 
@@ -37,6 +38,7 @@ public class NetEventsPlugin extends JavaPlugin {
             getPluginLoader().disablePlugin(this);
             return;
         }
+        getCommand("netevents").setExecutor(new StatusCommand(this));
 
         getServer().getPluginManager().registerEvents(new TestListener(), this);
     }
@@ -62,19 +64,20 @@ public class NetEventsPlugin extends JavaPlugin {
        if (receiver != null) {
             receiver.close();
         }
-        for (Forwarder conn : forwarders) {
+        for (Iterator<Forwarder> it = forwarders.values().iterator(); it.hasNext();) {
+            Forwarder conn = it.next();
+            it.remove();
             conn.close();
         }
-        forwarders.clear();
     }
 
     private void connect() throws IOException {
         if (receiver != null) {
             receiver.bind();
         }
-        for (Forwarder conn : forwarders) {
+        for (Forwarder conn : forwarders.values()) {
             try {
-            conn.connect();
+                conn.connect();
             } catch (IOException ex) {
                 getLogger().log(Level.SEVERE, "Unable to connect to remote server " + conn.getRemoteAddress(), ex);
             }
@@ -86,7 +89,11 @@ public class NetEventsPlugin extends JavaPlugin {
     }
 
     void addForwarder(Forwarder forwarder) {
-        forwarders.add(forwarder);
+        forwarders.put(forwarder.getRemoteAddress(), forwarder);
+    }
+
+    void removeForwarder(Forwarder f) {
+        forwarders.remove(f.getRemoteAddress());
     }
 
     @Override
@@ -98,7 +105,7 @@ public class NetEventsPlugin extends JavaPlugin {
 
         final List<String> forwardAddresses = getConfig().getStringList("forward-to");
         for (String forwardTo : forwardAddresses) {
-            forwarders.add(new Forwarder(this, toSocketAddr(forwardTo), true));
+            addForwarder(new Forwarder(this, toSocketAddr(forwardTo), true));
         }
     }
 
@@ -115,11 +122,11 @@ public class NetEventsPlugin extends JavaPlugin {
     }
 
     public <T extends Event & Serializable> T callEvent(T event) {
-        callEvent(new EventPacket(event));
+        callEvent(new EventPacket(event), null);
         return event;
     }
 
-    void callEvent(EventPacket packet) {
+    void callEvent(EventPacket packet, Connection ignoreTo) {
         while (processedEvents.size() > EVENT_CACHE_COUNT) {
             processedEvents.removeLast();
         }
@@ -129,8 +136,23 @@ public class NetEventsPlugin extends JavaPlugin {
         processedEvents.add(packet.getUid());
         getServer().getPluginManager().callEvent(packet.getSendEvent());
 
-        for (Forwarder f : forwarders) {
+        for (Forwarder f : forwarders.values()) {
+            try {
+                if (f.getRemoteAddress().equals(ignoreTo.getChannel().getRemoteAddress())) {
+                    continue;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             f.write(packet);
         }
+    }
+
+    Collection<Forwarder> getForwarders() {
+        return forwarders.values();
+    }
+
+    public SocketAddress getBoundAddress() {
+        return receiver.getBoundAddress();
     }
 }

@@ -3,40 +3,36 @@ package com.zachsthings.netevents;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.logging.Level;
 
 /**
 * Thread able to handle IO operations
 */
 abstract class IOThread extends Thread {
+    protected final Connection conn;
     protected final SocketChannel chan;
-    protected final ByteBuffer headerBuf = ByteBuffer.allocate(1 + 4);
-    protected final Selector selector;
+    protected final ByteBuffer headerBuf = ByteBuffer.allocateDirect(1 + 4);
 
-    public IOThread(SocketChannel chan, int selectorOps) throws IOException {
-        this.chan = chan;
-        this.selector = Selector.open();
-        //chan.register(selector, selectorOps);
+    public IOThread(Connection conn) throws IOException {
+        this.conn = conn;
+        this.chan = conn.getChannel();
     }
 
     @Override
     public void run() {
         try {
             while (chan.isConnected()) {
-                //selector.select();
                 act();
             }
-        } catch (ClosedChannelException e) {
-            // Channel's closed, we're done
-            return;
+        } catch (ClosedChannelException ignore) {
+        } catch (IOException e) {
+            conn.getPlugin().getLogger().log(Level.SEVERE, "Error occurred while processing IO", e);
+        }
+        try {
+            conn.close();
         } catch (IOException e) {
             e.printStackTrace();
-            try {
-                chan.close();
-            } catch (IOException e1) {
-                // Squash, nothing else we can do
-            }
         }
     }
 

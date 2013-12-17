@@ -34,6 +34,10 @@ public class Receiver implements Closeable {
         }
     }
 
+    public SocketAddress getBoundAddress() {
+        return bindAddress;
+    }
+
     private class ListenThread extends Thread {
         @Override
         public void run() {

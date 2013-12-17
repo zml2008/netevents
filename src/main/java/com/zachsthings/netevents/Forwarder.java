@@ -3,13 +3,12 @@ package com.zachsthings.netevents;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.net.StandardSocketOptions;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * @author zml2008
+ * Handles logic of connection management and teardown
  */
 class Forwarder implements Closeable {
     private final NetEventsPlugin plugin;
@@ -29,7 +28,17 @@ class Forwarder implements Closeable {
 
     Forwarder(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
         this(plugin, chan.getRemoteAddress(), false);
-        conn.set(new Connection(plugin, chan));
+        final Connection conn = new Connection(plugin, chan);
+        conn.addCloseListener(new ConnectionCloseListener());
+        this.conn.set(conn);
+    }
+
+    class ConnectionCloseListener implements Runnable {
+        @Override
+        public void run() {
+            conn.set(null);
+            plugin.removeForwarder(Forwarder.this);
+        }
     }
 
     public void connect() throws IOException {
@@ -47,13 +56,14 @@ class Forwarder implements Closeable {
         Connection.configureSocketChannel(sock);
 
         final Connection conn = new Connection(plugin, sock);
-        if (!this.conn.compareAndSet(null, conn)) { // Already been reconnected
+        conn.addCloseListener(new ConnectionCloseListener());
+        if (!this.conn.compareAndSet(null, conn)) { // Already been connected
             conn.close();
         }
     }
 
     public void close() throws IOException {
-        final Connection conn = this.conn.getAndSet(null);
+        final Connection conn = this.conn.get();
         if (conn != null) {
             conn.close();
         }
@@ -64,6 +74,10 @@ class Forwarder implements Closeable {
         if (conn != null) {
             conn.write(packet);
         }
+    }
+
+    public boolean isActive() {
+        return this.conn.get() != null;
     }
 
     public SocketAddress getRemoteAddress() {

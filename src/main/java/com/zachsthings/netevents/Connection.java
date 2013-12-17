@@ -5,15 +5,19 @@ import java.io.IOException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents a single connection
  */
 public class Connection implements Closeable {
+    private final AtomicBoolean disconnectHandled = new AtomicBoolean();
+    private final List<Runnable> closeListeners = new CopyOnWriteArrayList<Runnable>();
     private final NetEventsPlugin plugin;
     private final SocketChannel chan;
     private final OutputThread out;
@@ -22,7 +26,7 @@ public class Connection implements Closeable {
     public Connection(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
         this.plugin = plugin;
         this.chan = chan;
-        this.out = new OutputThread(chan);
+        this.out = new OutputThread(this);
         this.in = new InputThread(this, plugin);
         out.start();
         in.start();
@@ -30,12 +34,32 @@ public class Connection implements Closeable {
 
     public void close() throws IOException {
         chan.close();
+        handleClosed();
+    }
+
+    void handleClosed() {
+        if (chan.isConnected()) {
+            return;
+        }
         out.interrupt();
         in.interrupt();
+        if (disconnectHandled.compareAndSet(false, true)) {
+            for (Runnable r : closeListeners) {
+                r.run();
+            }
+        }
     }
 
     public void write(Packet p) {
         out.sendQueue.addLast(p);
+    }
+
+    SocketChannel getChannel() {
+        return chan;
+    }
+
+    public void addCloseListener(Runnable listener) {
+        closeListeners.add(listener);
     }
 
     public NetEventsPlugin getPlugin() {
@@ -45,8 +69,8 @@ public class Connection implements Closeable {
     public static class OutputThread extends IOThread {
         private final BlockingDeque<Packet> sendQueue = new LinkedBlockingDeque<Packet>();
 
-        public OutputThread(SocketChannel chan) throws IOException {
-            super(chan, SelectionKey.OP_WRITE);
+        public OutputThread(Connection conn) throws IOException {
+            super(conn);
         }
 
         @Override
@@ -68,20 +92,16 @@ public class Connection implements Closeable {
                     }
                 }
             } catch (InterruptedException e) {
-                if (chan.isConnected()) {
-                    chan.close();
-                }
+                conn.close();
             }
         }
     }
 
     public static class InputThread extends IOThread {
-        private final Connection conn;
         private final NetEventsPlugin plugin;
         public InputThread(Connection conn, NetEventsPlugin plugin) throws IOException {
-            super(conn.chan, SelectionKey.OP_READ);
+            super(conn);
             this.plugin = plugin;
-            this.conn = conn;
         }
 
         @Override
@@ -116,7 +136,6 @@ public class Connection implements Closeable {
                     throw new IOException("Unknown opcode " + opcode + " received");
             }
             plugin.getHandlerQueue().queuePacket(packet, conn);
-
         }
     }
 
