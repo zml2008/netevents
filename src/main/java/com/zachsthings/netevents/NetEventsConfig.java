@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by zach on 12/16/13.
+ * Contains the immutable data from one configuration instance.
  */
 public class NetEventsConfig {
     public static final int DEFAULT_PORT = 25566;

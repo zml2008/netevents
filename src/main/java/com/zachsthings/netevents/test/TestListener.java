@@ -4,7 +4,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
- * Created by zach on 12/15/13.
+ * Test listener.
  */
 public class TestListener implements Listener {
     @EventHandler

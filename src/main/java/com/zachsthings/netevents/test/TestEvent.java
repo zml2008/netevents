@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * Created by zach on 12/15/13.
+ * Event for testing purposes
  */
 public class TestEvent extends Event implements Serializable {
 

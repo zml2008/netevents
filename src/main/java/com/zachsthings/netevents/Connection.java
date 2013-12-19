@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Represents a single connection
+ * Represents a single connection. Forwarder wraps this connection for reconnecting, but once this is closed it's closed permanently.
  */
 public class Connection implements Closeable {
     private final NetEventsPlugin plugin;
@@ -59,6 +59,9 @@ public class Connection implements Closeable {
     }
 
     public void write(Packet p) {
+        if (!chan.isConnected()) {
+            throw new IllegalStateException("Channel not connected");
+        }
         out.sendQueue.addLast(p);
     }
 
