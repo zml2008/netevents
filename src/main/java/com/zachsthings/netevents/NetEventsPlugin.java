@@ -7,6 +7,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.JavaPluginLoader;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -22,6 +23,7 @@ public class NetEventsPlugin extends JavaPlugin {
     private final Map<SocketAddress, Forwarder> forwarders = new HashMap<SocketAddress, Forwarder>();
     private Receiver receiver;
     private PacketHandlerQueue handlerQueue;
+    private ReconnectTask reconnectTask;
     private NetEventsConfig config;
 
     @Override
@@ -29,6 +31,8 @@ public class NetEventsPlugin extends JavaPlugin {
         this.saveDefaultConfig();
         handlerQueue = new PacketHandlerQueue(this);
         handlerQueue.schedule();
+        reconnectTask = new ReconnectTask();
+        getServer().getScheduler().runTaskTimerAsynchronously(this, reconnectTask, 0, 20);
         reloadConfig();
         try {
             connect();
@@ -72,7 +76,7 @@ public class NetEventsPlugin extends JavaPlugin {
     }
 
     private void close() throws IOException {
-       if (receiver != null) {
+        if (receiver != null) {
             receiver.close();
         }
         for (Iterator<Forwarder> it = forwarders.values().iterator(); it.hasNext();) {
@@ -93,7 +97,8 @@ public class NetEventsPlugin extends JavaPlugin {
             try {
                 fwd.connect(addr);
             } catch (IOException ex) {
-                getLogger().log(Level.SEVERE, "Unable to connect to remote server " + addr + " (will keep trying)", ex);
+                reconnectTask.schedule(fwd);
+                getLogger().log(Level.SEVERE, "Unable to connect to remote server " + addr + " (will keep trying): " + ex);
             }
             addForwarder(fwd);
         }
@@ -101,6 +106,10 @@ public class NetEventsPlugin extends JavaPlugin {
 
     PacketHandlerQueue getHandlerQueue() {
         return handlerQueue;
+    }
+
+    ReconnectTask getReconnectTask() {
+        return reconnectTask;
     }
 
     void addForwarder(Forwarder forwarder) {
@@ -135,9 +144,9 @@ public class NetEventsPlugin extends JavaPlugin {
         getServer().getPluginManager().callEvent(packet.getSendEvent());
 
         for (Forwarder f : forwarders.values()) {
-                if (ignoreTo != null && ignoreTo.getRemoteAddress().equals(f.getRemoteAddress())) {
-                    continue;
-                }
+            if (ignoreTo != null && ignoreTo.getRemoteAddress().equals(f.getRemoteAddress())) {
+                continue;
+            }
             f.write(packet);
         }
     }

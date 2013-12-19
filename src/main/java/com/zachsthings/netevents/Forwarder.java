@@ -23,7 +23,11 @@ class Forwarder implements Closeable {
         @Override
         public void run() {
             conn.set(null);
-            plugin.removeForwarder(Forwarder.this);
+            if (Forwarder.this.reconnectAddress != null) {
+                plugin.getReconnectTask().schedule(Forwarder.this);
+            } else {
+                plugin.removeForwarder(Forwarder.this);
+            }
         }
     }
 
@@ -47,8 +51,21 @@ class Forwarder implements Closeable {
             conn.close();
         } else {
             conn.addCloseListener(new ConnectionCloseListener());
-            reconnectAddress = null; // Clear it out just in case
+            reconnectAddress = null; // Clear it out in case of previous connection
         }
+    }
+
+    public boolean isReconnectable() {
+        return this.reconnectAddress != null;
+    }
+
+    boolean reconnect() throws IOException {
+        SocketAddress reconnectAddress = this.reconnectAddress;
+        if (reconnectAddress != null) {
+            connect(reconnectAddress);
+            return true;
+        }
+        return false;
     }
 
     public void close() throws IOException {
@@ -77,7 +94,7 @@ class Forwarder implements Closeable {
         } else {
             return reconnectAddress;
         }
-   }
+    }
 
     @Override
     public String toString() {
