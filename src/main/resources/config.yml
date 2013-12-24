@@ -1,5 +1,5 @@
 # The address to listen on
-listen-at: :25566
+listen-at: 0.0.0.0:25566
 # A list of servers that events will be passed on to.
 forward-to:
  - server.address.example.com:25566

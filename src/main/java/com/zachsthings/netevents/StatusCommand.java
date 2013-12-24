@@ -5,6 +5,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import java.io.IOException;
+import java.util.logging.Level;
+
 /**
  * Command that provides status report
  */
@@ -15,6 +18,10 @@ public class StatusCommand implements CommandExecutor {
             build.append(arg).append(ChatColor.BLUE);
         }
         return build.toString();
+    }
+
+    private static String error(String args) {
+        return ChatColor.RED + args;
     }
 
     private static String hl(String text) {
@@ -29,15 +36,38 @@ public class StatusCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        sender.sendMessage(text("NetEvents version ", hl(plugin.getDescription().getVersion())));
-        sender.sendMessage(text("Remote listener bound to ", hl(plugin.getBoundAddress().toString())));
-        sender.sendMessage(text("Connected servers:"));
-        for (Forwarder f : plugin.getForwarders()) {
-            if (f.isActive()) {
-                sender.sendMessage(text("- ", hl(f.getRemoteAddress().toString())));
-            } else if (f.getRemoteAddress() != null) {
-                sender.sendMessage(text("- ", ChatColor.RED + f.getRemoteAddress().toString()));
+        if (args.length == 0) {
+            sender.sendMessage(text("NetEvents version ", hl(plugin.getDescription().getVersion())));
+            sender.sendMessage(text("Remote listener bound to ", hl(plugin.getBoundAddress().toString())));
+            sender.sendMessage(text("Connected servers:"));
+            for (Forwarder f : plugin.getForwarders()) {
+                if (f.isActive()) {
+                    sender.sendMessage(text("- ", hl(f.getRemoteAddress().toString())));
+                } else if (f.getRemoteAddress() != null) {
+                    sender.sendMessage(text("- ", ChatColor.RED + f.getRemoteAddress().toString()));
+                }
             }
+            sender.sendMessage(error("Usage: /" + label + " <reload|tryconnect|connect"));
+        } else {
+            final String commandLabel = args[0];
+            if (commandLabel.equals("reload")) {
+                try {
+                    plugin.reload();
+                    sender.sendMessage(text("NetEvents reloaded"));
+                } catch (IOException e) {
+                    sender.sendMessage(error("Error reloading. See console for details."));
+                    plugin.getLogger().log(Level.SEVERE, "Error reloading", e);
+                }
+
+            } else if (commandLabel.equals("tryconnect")) {
+                plugin.getReconnectTask().attemptAllNext();
+                sender.sendMessage(text("Attempting to reconnect to all errored servers next second"));
+            }/* else if (commandLabel.equals("connect")) {
+                if (args.length < 2) {
+                    sender.sendMessage("Not enough arguments! Usage: /" + commandLabel + " connect <server>");
+                    return true;
+                }
+            }*/
         }
         return true;
     }
