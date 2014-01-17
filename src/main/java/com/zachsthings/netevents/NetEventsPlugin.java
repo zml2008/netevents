@@ -24,10 +24,12 @@ public class NetEventsPlugin extends JavaPlugin {
     private PacketHandlerQueue handlerQueue;
     private ReconnectTask reconnectTask;
     private NetEventsConfig config;
+    private ServerUUID uidHolder;
 
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
+        uidHolder = new ServerUUID(getDataFolder().toPath().resolve("uuid.dat"));
         handlerQueue = new PacketHandlerQueue(this);
         handlerQueue.schedule();
         reconnectTask = new ReconnectTask();
@@ -121,6 +123,10 @@ public class NetEventsPlugin extends JavaPlugin {
 
     Collection<Forwarder> getForwarders() {
         return forwarders.values();
+    }
+
+    public UUID getServerUUID() {
+        return uidHolder.get();
     }
 
     public SocketAddress getBoundAddress() {
