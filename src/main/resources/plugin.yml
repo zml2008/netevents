@@ -3,9 +3,6 @@ version: "${project.version}"
 description: "${project.description}"
 main: com.zachsthings.netevents.NetEventsPlugin
 commands:
-    test:
-        description: Call test event
-        permission: netevents.test
     netevents:
         description: status report on netevents
         usage: /<command>

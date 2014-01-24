@@ -15,6 +15,7 @@
  */
 package com.zachsthings.netevents;
 
+import com.zachsthings.netevents.test.PingEvent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -62,7 +63,7 @@ public class StatusCommand implements CommandExecutor {
                     sender.sendMessage(text("- ", ChatColor.RED + f.getRemoteAddress().toString()));
                 }
             }
-            sender.sendMessage(error("Usage: /" + label + " <reload|tryconnect|connect"));
+            sender.sendMessage(error("Usage: /" + label + " <reload|tryconnect|ping>"));
         } else {
             final String commandLabel = args[0];
             if (commandLabel.equals("reload")) {
@@ -77,7 +78,10 @@ public class StatusCommand implements CommandExecutor {
             } else if (commandLabel.equals("tryconnect")) {
                 plugin.getReconnectTask().attemptAllNext();
                 sender.sendMessage(text("Attempting to reconnect to all errored servers next second"));
-            }/* else if (commandLabel.equals("connect")) {
+            } else if (commandLabel.equals("ping")) {
+                plugin.callEvent(new PingEvent());
+                sender.sendMessage(text("Sent ping to all connected servers"));
+            } /* else if (commandLabel.equals("connect")) {
                 if (args.length < 2) {
                     sender.sendMessage("Not enough arguments! Usage: /" + commandLabel + " connect <server>");
                     return true;

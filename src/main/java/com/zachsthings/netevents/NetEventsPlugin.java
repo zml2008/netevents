@@ -15,9 +15,7 @@
  */
 package com.zachsthings.netevents;
 
-import com.zachsthings.netevents.test.TestEvent;
-import com.zachsthings.netevents.test.TestListener;
-import org.bukkit.ChatColor;
+import com.zachsthings.netevents.test.PingListener;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
@@ -59,13 +57,11 @@ public class NetEventsPlugin extends JavaPlugin {
         }
         getCommand("netevents").setExecutor(new StatusCommand(this));
 
-        getServer().getPluginManager().registerEvents(new TestListener(), this);
+        getServer().getPluginManager().registerEvents(new PingListener(this), this);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        callEvent(new TestEvent());
-        sender.sendMessage(ChatColor.BLUE + "Called event");
         return true;
     }
 

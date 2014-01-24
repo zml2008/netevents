@@ -25,12 +25,12 @@ import java.net.UnknownHostException;
 /**
  * Event for testing purposes
  */
-public class TestEvent extends Event implements Serializable {
+public class PingEvent extends Event implements Serializable {
 
     private static final HandlerList HANDLERS = new HandlerList();
     private final String hostname;
 
-    public TestEvent() {
+    public PingEvent() {
         String hostname;
         try {
             hostname = InetAddress.getLocalHost().getHostName();

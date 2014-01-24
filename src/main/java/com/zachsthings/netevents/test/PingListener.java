@@ -15,15 +15,22 @@
  */
 package com.zachsthings.netevents.test;
 
+import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
- * Test listener.
+ * Ping listener.
  */
-public class TestListener implements Listener {
-    @EventHandler
-    public void onTestEvent(TestEvent event) {
-        System.out.println("Received test event from " + event.getHostname());
+public class PingListener implements Listener {
+	private final NetEventsPlugin plugin;
+
+	public PingListener(NetEventsPlugin plugin) {
+		this.plugin = plugin;
+	}
+
+	@EventHandler
+    public void onPingEvent(PingEvent event) {
+        plugin.getLogger().info("Received test event from " + event.getHostname());
     }
 }
