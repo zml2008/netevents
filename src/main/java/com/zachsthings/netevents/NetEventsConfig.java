@@ -27,9 +27,12 @@ import java.util.List;
  * Contains the immutable data from one configuration instance.
  */
 public class NetEventsConfig {
+	/**
+	 * The default port NetEvents listens at and connects to when no other is specified
+	 */
     public static final int DEFAULT_PORT = 25566;
     private final SocketAddress listenAddress;
-    private final List<SocketAddress> connectAddresses = new ArrayList<SocketAddress>();
+    private final List<SocketAddress> connectAddresses = new ArrayList<>();
     private final boolean defaultDebugMode;
 
     public NetEventsConfig(Configuration config) {
@@ -42,14 +45,29 @@ public class NetEventsConfig {
         defaultDebugMode = config.getBoolean("debug");
     }
 
+	/**
+	 * Return the address NetEvents should listen at for incoming connections.
+	 *
+	 * @return The address to listen at
+	 */
     public SocketAddress getListenAddress() {
         return listenAddress;
     }
 
+	/**
+	 * Return the addresses this instance of NetEvents will attempt to connect to.
+	 *
+	 * @return The addresses to connect to
+	 */
     public List<SocketAddress> getConnectAddresses() {
         return Collections.unmodifiableList(connectAddresses);
     }
 
+	/**
+	 * Returns whether debug mode should be enabled by default
+	 *
+	 * @return debug mode enabled by default?
+	 */
     public boolean defaultDebugMode() {
         return defaultDebugMode;
     }

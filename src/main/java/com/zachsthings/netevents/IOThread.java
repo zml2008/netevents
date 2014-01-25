@@ -23,6 +23,8 @@ import java.util.logging.Level;
 
 /**
 * Thread able to handle IO operations
+ *
+ * Provides some utility for IO threads
 */
 abstract class IOThread extends Thread {
     protected final Connection conn;

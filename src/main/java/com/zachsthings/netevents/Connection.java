@@ -32,7 +32,7 @@ import java.util.logging.Level;
 /**
  * Represents a single connection. Forwarder wraps this connection for reconnecting, but once this is closed it's closed permanently.
  */
-public class Connection implements Closeable {
+class Connection implements Closeable {
     private final NetEventsPlugin plugin;
     // State tracking
     private final AtomicBoolean disconnectHandled = new AtomicBoolean();

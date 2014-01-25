@@ -24,7 +24,7 @@ import java.util.logging.Level;
 /**
  * Queue that brings packet handlers back on the main server thread
  */
-public class PacketHandlerQueue implements Runnable {
+class PacketHandlerQueue implements Runnable {
     private static class QueueEntry {
         private final Packet pkt;
         private final Connection conn;
@@ -65,10 +65,10 @@ public class PacketHandlerQueue implements Runnable {
         QueueEntry entry;
         while ((entry = toProcess.poll()) != null) {
             try {
-            entry.pkt.handle(entry.conn);
-            if ((System.currentTimeMillis() - startTime) > MAX_TIME && toProcess.size() < EVENT_COUNT_THRESHOLD) {
-                break;
-            }
+                entry.pkt.handle(entry.conn);
+                if ((System.currentTimeMillis() - startTime) > MAX_TIME && toProcess.size() < EVENT_COUNT_THRESHOLD) {
+                    break;
+                }
             } catch (Exception e) {
                 plugin.getLogger().log(Level.SEVERE, "Error occurred while handling packet from " + entry.pkt + ", skipping", e);
             }

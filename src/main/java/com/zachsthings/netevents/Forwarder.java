@@ -23,11 +23,13 @@ import java.nio.channels.UnresolvedAddressException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Handles logic of connection management and teardown
+ * Handles logic of connection management and teardown.
+ *
+ * Wraps connection a lot, but handles the logic of state tracking in {@link com.zachsthings.netevents.NetEventsPlugin} and autoreconnect.
  */
 class Forwarder implements Closeable {
     private final NetEventsPlugin plugin;
-    private final AtomicReference<Connection> conn = new AtomicReference<Connection>();
+    private final AtomicReference<Connection> conn = new AtomicReference<>();
     private SocketAddress reconnectAddress;
 
     public Forwarder(NetEventsPlugin plugin) {

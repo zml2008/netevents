@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 /**
  * Holder for a fixed server UUID field that is persistent
  */
-public class ServerUUID {
+class ServerUUID {
     private static final Logger log = Logger.getLogger(ServerUUID.class.getCanonicalName());
     private UUID serverUid;
     private final Path storeFile;

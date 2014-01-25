@@ -25,7 +25,7 @@ import java.nio.channels.SocketChannel;
 /**
  * Receives new clients for usage
  */
-public class Receiver implements Closeable {
+class Receiver implements Closeable {
     private final NetEventsPlugin plugin;
     private final SocketAddress bindAddress;
     private ServerSocketChannel server;

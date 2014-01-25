@@ -26,7 +26,7 @@ import java.util.UUID;
  *
  * All events must implement both the zero-args and argument-containing constructors
  */
-public class EventPacket implements Packet {
+class EventPacket implements Packet {
     private final UUID uid;
     private final Event sendEvent;
 

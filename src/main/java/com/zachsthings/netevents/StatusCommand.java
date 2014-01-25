@@ -27,7 +27,7 @@ import java.util.logging.Level;
 /**
  * Command that provides status report
  */
-public class StatusCommand implements CommandExecutor {
+class StatusCommand implements CommandExecutor {
     private static String text(String... args) {
         StringBuilder build = new StringBuilder(ChatColor.BLUE.toString());
         for (String arg : args) {

@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Scheduler task to handle autoreconnect
  */
-public class ReconnectTask implements Runnable {
+class ReconnectTask implements Runnable {
     private static class ReconnectItem {
         private final Forwarder reconnect;
         private int runCount = 0, countPassed = 0;
@@ -39,8 +39,7 @@ public class ReconnectTask implements Runnable {
     @Override
     public void run() {
         final boolean runAll = runAllNext.compareAndSet(true, false);
-        for (Iterator<ReconnectItem> it = taskQueue.iterator(); it.hasNext(); ) {
-            ReconnectItem item = it.next();
+        for (ReconnectItem item : taskQueue) {
             if (item.countPassed++ == item.runCount || runAll) {
                 try {
                     item.reconnect.reconnect();
