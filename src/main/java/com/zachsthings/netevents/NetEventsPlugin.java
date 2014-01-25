@@ -51,12 +51,19 @@ public class NetEventsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
         uidHolder = new ServerUUID(getDataFolder().toPath().resolve("uuid.dat"));
         handlerQueue = new PacketHandlerQueue(this);
         handlerQueue.schedule();
         reconnectTask = new ReconnectTask();
         getServer().getScheduler().runTaskTimerAsynchronously(this, reconnectTask, 0, 20);
         reloadConfig();
+        if (config.getPassphrase().equals("changeme")) {
+            getLogger().severe("Passphrase has not been changed from default! NetEvents will not enable until this happens");
+            getPluginLoader().disablePlugin(this);
+            return;
+        }
+
         socketWrapper = new AESSocketWrapper(config.getPassphrase());
         try {
             connect();
@@ -67,7 +74,7 @@ public class NetEventsPlugin extends JavaPlugin {
         }
         getCommand("netevents").setExecutor(new StatusCommand(this));
 
-       debugMode = config.defaultDebugMode();
+        debugMode = config.defaultDebugMode();
 
         getServer().getPluginManager().registerEvents(new PingListener(this), this);
     }
