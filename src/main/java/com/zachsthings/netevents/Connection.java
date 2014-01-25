@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 /**
- * Represents a single connection. Forwarder wraps this connection for reconnecting, but once this is closed it's closed permanently.
+ * Represents a single connection. {@link Forwarder} wraps connection for reconnecting, but once this is closed it's closed permanently.
  */
 class Connection implements Closeable {
     private final NetEventsPlugin plugin;
@@ -48,7 +48,7 @@ class Connection implements Closeable {
         this.chan = chan;
         this.remoteAddress = chan.getRemoteAddress();
         if (remoteAddress == null) {
-            System.out.println("Null remote address for " + chan);
+            throw new IOException("Null remote address for " + chan);
         }
         this.out = new OutputThread(this);
         this.in = new InputThread(this, plugin);
@@ -130,6 +130,7 @@ class Connection implements Closeable {
 
     public static class InputThread extends IOThread {
         private final NetEventsPlugin plugin;
+
         public InputThread(Connection conn, NetEventsPlugin plugin) throws IOException {
             super(conn);
             this.plugin = plugin;
@@ -159,21 +160,21 @@ class Connection implements Closeable {
             payload.flip();
 
             try {
-            Packet packet;
-            switch (opcode) {
-                case Opcodes.PASS_EVENT:
-                    packet = EventPacket.read(payload);
-                    if (packet == null) {
-                        plugin.debug("Unknown event received from " + conn.getRemoteAddress());
-                     }
-                    break;
-                default:
-                    throw new IOException("Unknown opcode " + opcode + " received");
-            }
-            if (packet != null) {
-                plugin.debug("Received packet " + packet + " from " + conn.getRemoteAddress());
-                plugin.getHandlerQueue().queuePacket(packet, conn);
-            }
+                Packet packet;
+                switch (opcode) {
+                    case Opcodes.PASS_EVENT:
+                        packet = EventPacket.read(payload);
+                        if (packet == null) {
+                            plugin.debug("Unknown event received from " + conn.getRemoteAddress());
+                        }
+                        break;
+                    default:
+                        throw new IOException("Unknown opcode " + opcode + " received");
+                }
+                if (packet != null) {
+                    plugin.debug("Received packet " + packet + " from " + conn.getRemoteAddress());
+                    plugin.getHandlerQueue().queuePacket(packet, conn);
+                }
             } catch (Exception e) {
                 plugin.getLogger().log(Level.SEVERE, "Unable to read packet (id " + opcode + ") from " + conn.getRemoteAddress() + ", skipping", e);
             }

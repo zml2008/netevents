@@ -34,6 +34,7 @@ public class NetEventsConfig {
     private final SocketAddress listenAddress;
     private final List<SocketAddress> connectAddresses = new ArrayList<>();
     private final boolean defaultDebugMode;
+    private final String passphrase;
 
     public NetEventsConfig(Configuration config) {
         listenAddress = toSocketAddr(config.getString("listen-at"));
@@ -43,6 +44,7 @@ public class NetEventsConfig {
             connectAddresses.add(toSocketAddr(forwardTo));
         }
         defaultDebugMode = config.getBoolean("debug");
+        passphrase = config.getString("passphrase");
     }
 
 	/**
@@ -70,6 +72,10 @@ public class NetEventsConfig {
 	 */
     public boolean defaultDebugMode() {
         return defaultDebugMode;
+    }
+
+    String getPassphrase() {
+        return passphrase;
     }
 
     private InetSocketAddress toSocketAddr(String addr) {

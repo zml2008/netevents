@@ -44,12 +44,13 @@ abstract class IOThread extends Thread {
             }
         } catch (ClosedChannelException ignore) {
         } catch (IOException e) {
-            conn.getPlugin().getLogger().log(Level.SEVERE, "Error occurred while processing IO", e);
+            conn.getPlugin().getLogger().log(Level.SEVERE, "Error occurred while processing IO for " + conn.getRemoteAddress(), e);
         }
+
         try {
             conn.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            conn.getPlugin().getLogger().log(Level.SEVERE, "Error occurred while closing connection " + conn.getRemoteAddress(), e);
         }
     }
 

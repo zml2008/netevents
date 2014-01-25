@@ -15,6 +15,8 @@
  */
 package com.zachsthings.netevents;
 
+import com.zachsthings.netevents.sec.AESSocketWrapper;
+import com.zachsthings.netevents.sec.SocketWrapper;
 import com.zachsthings.netevents.ping.PingListener;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -43,6 +45,7 @@ public class NetEventsPlugin extends JavaPlugin {
     private ReconnectTask reconnectTask;
     private NetEventsConfig config;
     private ServerUUID uidHolder;
+    private SocketWrapper socketWrapper;
     private boolean debugMode;
 
     @Override
@@ -54,6 +57,7 @@ public class NetEventsPlugin extends JavaPlugin {
         reconnectTask = new ReconnectTask();
         getServer().getScheduler().runTaskTimerAsynchronously(this, reconnectTask, 0, 20);
         reloadConfig();
+        socketWrapper = new AESSocketWrapper(config.getPassphrase());
         try {
             connect();
         } catch (IOException e) {
@@ -233,4 +237,7 @@ public class NetEventsPlugin extends JavaPlugin {
         }
     }
 
+    public SocketWrapper getSocketWrapper() {
+        return socketWrapper;
+    }
 }
