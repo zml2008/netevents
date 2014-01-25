@@ -63,9 +63,6 @@ public class NetEventsPlugin extends JavaPlugin {
         }
         getCommand("netevents").setExecutor(new StatusCommand(this));
 
-        System.out.println("Has debug: " + hasDebugMode());
-        System.out.println("Loggable level: " + getLogger().getLevel());
-
        debugMode = config.defaultDebugMode();
 
         getServer().getPluginManager().registerEvents(new PingListener(this), this);
