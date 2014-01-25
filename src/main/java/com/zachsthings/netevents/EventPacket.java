@@ -61,7 +61,7 @@ public class EventPacket implements Packet {
         try {
             o = ois.readObject();
         } catch (ClassNotFoundException e) {
-            throw new IOException(e);
+            return null;
         }
 
         if (!(o instanceof Event)) {
@@ -93,5 +93,13 @@ public class EventPacket implements Packet {
         ByteBuffer buf = ByteBuffer.wrap(baos.toByteArray());
         buf.position(buf.limit());
         return buf;
+    }
+
+    @Override
+    public String toString() {
+        return "EventPacket{" +
+                "uid=" + uid +
+                ", sendEvent=" + sendEvent +
+                '}';
     }
 }

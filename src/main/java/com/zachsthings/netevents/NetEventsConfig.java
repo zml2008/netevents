@@ -30,6 +30,7 @@ public class NetEventsConfig {
     public static final int DEFAULT_PORT = 25566;
     private final SocketAddress listenAddress;
     private final List<SocketAddress> connectAddresses = new ArrayList<SocketAddress>();
+    private final boolean defaultDebugMode;
 
     public NetEventsConfig(Configuration config) {
         listenAddress = toSocketAddr(config.getString("listen-at"));
@@ -38,6 +39,7 @@ public class NetEventsConfig {
         for (String forwardTo : forwardAddresses) {
             connectAddresses.add(toSocketAddr(forwardTo));
         }
+        defaultDebugMode = config.getBoolean("debug");
     }
 
     public SocketAddress getListenAddress() {
@@ -46,6 +48,10 @@ public class NetEventsConfig {
 
     public List<SocketAddress> getConnectAddresses() {
         return Collections.unmodifiableList(connectAddresses);
+    }
+
+    public boolean defaultDebugMode() {
+        return defaultDebugMode;
     }
 
     private InetSocketAddress toSocketAddr(String addr) {

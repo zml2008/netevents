@@ -63,7 +63,7 @@ public class StatusCommand implements CommandExecutor {
                     sender.sendMessage(text("- ", ChatColor.RED + f.getRemoteAddress().toString()));
                 }
             }
-            sender.sendMessage(error("Usage: /" + label + " <reload|tryconnect|ping>"));
+            sender.sendMessage(error("Usage: /" + label + " <reload|tryconnect|ping|debug>"));
         } else {
             final String commandLabel = args[0];
             if (commandLabel.equals("reload")) {
@@ -81,6 +81,10 @@ public class StatusCommand implements CommandExecutor {
             } else if (commandLabel.equals("ping")) {
                 plugin.callEvent(new PingEvent());
                 sender.sendMessage(text("Sent ping to all connected servers"));
+            } else if (commandLabel.equals("debug")) {
+                final boolean debugState = !plugin.hasDebugMode();
+                plugin.setDebugMode(debugState);
+                sender.sendMessage(text("Debug mode ", hl(debugState ? "enabled" : "disabled")));
             } /* else if (commandLabel.equals("connect")) {
                 if (args.length < 2) {
                     sender.sendMessage("Not enough arguments! Usage: /" + commandLabel + " connect <server>");

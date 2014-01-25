@@ -38,6 +38,7 @@ public class NetEventsPlugin extends JavaPlugin {
     private ReconnectTask reconnectTask;
     private NetEventsConfig config;
     private ServerUUID uidHolder;
+    private boolean debugMode;
 
     @Override
     public void onEnable() {
@@ -56,6 +57,11 @@ public class NetEventsPlugin extends JavaPlugin {
             return;
         }
         getCommand("netevents").setExecutor(new StatusCommand(this));
+
+        System.out.println("Has debug: " + hasDebugMode());
+        System.out.println("Loggable level: " + getLogger().getLevel());
+
+       debugMode = config.defaultDebugMode();
 
         getServer().getPluginManager().registerEvents(new PingListener(this), this);
     }
@@ -113,6 +119,20 @@ public class NetEventsPlugin extends JavaPlugin {
                 getLogger().log(Level.SEVERE, "Unable to connect to remote server " + addr + " (will keep trying): " + ex);
             }
             addForwarder(fwd);
+        }
+    }
+
+    public void setDebugMode(boolean debug) {
+        debugMode = debug;
+    }
+
+    public boolean hasDebugMode() {
+        return debugMode;
+    }
+
+    protected void debug(String message) {
+        if (hasDebugMode()) {
+            getLogger().warning("[DEBUG] " + message);
         }
     }
 

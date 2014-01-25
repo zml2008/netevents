@@ -59,6 +59,7 @@ public class Receiver implements Closeable {
             try {
                 while (server.isOpen()) {
                     SocketChannel client = server.accept();
+                    plugin.debug("Received connection from " + client.getRemoteAddress());
                     Connection.configureSocketChannel(client);
                     Forwarder forward = new Forwarder(plugin);
                     forward.connect(client);

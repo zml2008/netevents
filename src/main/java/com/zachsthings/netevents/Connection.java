@@ -161,11 +161,17 @@ public class Connection implements Closeable {
             switch (opcode) {
                 case Opcodes.PASS_EVENT:
                     packet = EventPacket.read(payload);
+                    if (packet == null) {
+                        plugin.debug("Unknown event received from " + conn.getRemoteAddress());
+                     }
                     break;
                 default:
                     throw new IOException("Unknown opcode " + opcode + " received");
             }
-            plugin.getHandlerQueue().queuePacket(packet, conn);
+            if (packet != null) {
+                plugin.debug("Received packet " + packet + " from " + conn.getRemoteAddress());
+                plugin.getHandlerQueue().queuePacket(packet, conn);
+            }
         }
     }
 

@@ -67,6 +67,7 @@ class Forwarder implements Closeable {
         } else {
             conn.addCloseListener(new ConnectionCloseListener());
             reconnectAddress = null; // Clear it out in case of previous connection
+            plugin.debug("Connected to " + chan.getRemoteAddress());
         }
     }
 
