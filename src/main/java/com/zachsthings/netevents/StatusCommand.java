@@ -15,7 +15,7 @@
  */
 package com.zachsthings.netevents;
 
-import com.zachsthings.netevents.test.PingEvent;
+import com.zachsthings.netevents.ping.PingEvent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

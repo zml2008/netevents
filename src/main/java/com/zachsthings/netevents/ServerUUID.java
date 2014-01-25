@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * Holder for a fixed server UUID field that is persistent
  */
 public class ServerUUID {
-	private static final Logger log = Logger.getLogger(ServerUUID.class.getCanonicalName());
+    private static final Logger log = Logger.getLogger(ServerUUID.class.getCanonicalName());
     private UUID serverUid;
     private final Path storeFile;
 
@@ -43,8 +43,8 @@ public class ServerUUID {
             final long lsb = str.readLong();
             serverUid = new UUID(msb, lsb);
         } catch (IOException e) {
-			log.warning("Failed to read server UUID, generating new");
-			generateNew();
+            log.warning("Failed to read server UUID, generating new");
+            generateNew();
         }
     }
 
@@ -54,7 +54,7 @@ public class ServerUUID {
             str.writeLong(serverUid.getMostSignificantBits());
             str.writeLong(serverUid.getLeastSignificantBits());
         } catch (IOException e) {
-			log.severe("Failed to write new server UUID, may cause issues with plugins expecting persistent UUID");
+            log.severe("Failed to write new server UUID, may cause issues with plugins expecting persistent UUID");
         }
     }
 

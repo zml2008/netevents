@@ -15,7 +15,7 @@
  */
 package com.zachsthings.netevents;
 
-import com.zachsthings.netevents.test.PingListener;
+import com.zachsthings.netevents.ping.PingListener;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;

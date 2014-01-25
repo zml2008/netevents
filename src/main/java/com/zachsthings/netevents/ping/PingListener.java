@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zachsthings.netevents.test;
+package com.zachsthings.netevents.ping;
 
 import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.event.EventHandler;
@@ -23,14 +23,14 @@ import org.bukkit.event.Listener;
  * Ping listener.
  */
 public class PingListener implements Listener {
-	private final NetEventsPlugin plugin;
+    private final NetEventsPlugin plugin;
 
-	public PingListener(NetEventsPlugin plugin) {
-		this.plugin = plugin;
-	}
+    public PingListener(NetEventsPlugin plugin) {
+        this.plugin = plugin;
+    }
 
-	@EventHandler
+    @EventHandler
     public void onPingEvent(PingEvent event) {
-        plugin.getLogger().info("Received test event from " + event.getHostname());
+        plugin.getLogger().info("Received ping from " + event.getHostname());
     }
 }
