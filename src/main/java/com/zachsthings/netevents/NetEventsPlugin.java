@@ -107,6 +107,7 @@ public class NetEventsPlugin extends JavaPlugin {
     private void close() throws IOException {
         if (receiver != null) {
             receiver.close();
+            receiver = null;
         }
         for (Iterator<Forwarder> it = forwarders.values().iterator(); it.hasNext();) {
             Forwarder conn = it.next();
