@@ -101,7 +101,7 @@ class Connection implements Closeable {
         private final BlockingDeque<Packet> sendQueue = new LinkedBlockingDeque<Packet>();
 
         public OutputThread(Connection conn) throws IOException {
-            super(conn);
+            super("output", conn);
         }
 
         @Override
@@ -132,7 +132,7 @@ class Connection implements Closeable {
         private final NetEventsPlugin plugin;
 
         public InputThread(Connection conn, NetEventsPlugin plugin) throws IOException {
-            super(conn);
+            super("input", conn);
             this.plugin = plugin;
         }
 

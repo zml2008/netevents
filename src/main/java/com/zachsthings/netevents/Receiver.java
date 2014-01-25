@@ -54,6 +54,9 @@ class Receiver implements Closeable {
     }
 
     private class ListenThread extends Thread {
+        public ListenThread() {
+            super("NetEvents-Listener");
+        }
         @Override
         public void run() {
             try {

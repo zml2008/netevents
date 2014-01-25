@@ -31,7 +31,8 @@ abstract class IOThread extends Thread {
     protected final SocketChannel chan;
     protected final ByteBuffer headerBuf = ByteBuffer.allocateDirect(1 + 4);
 
-    public IOThread(Connection conn) throws IOException {
+    public IOThread(String name, Connection conn) throws IOException {
+        super("NetEvents-" + name + "-" + conn.getRemoteAddress());
         this.conn = conn;
         this.chan = conn.getChannel();
     }
