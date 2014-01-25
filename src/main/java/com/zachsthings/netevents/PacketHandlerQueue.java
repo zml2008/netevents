@@ -19,6 +19,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.logging.Level;
 
 /**
  * Queue that brings packet handlers back on the main server thread
@@ -63,9 +64,13 @@ public class PacketHandlerQueue implements Runnable {
         long startTime = System.currentTimeMillis();
         QueueEntry entry;
         while ((entry = toProcess.poll()) != null) {
+            try {
             entry.pkt.handle(entry.conn);
             if ((System.currentTimeMillis() - startTime) > MAX_TIME && toProcess.size() < EVENT_COUNT_THRESHOLD) {
                 break;
+            }
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Error occurred while handling packet from " + entry.pkt + ", skipping", e);
             }
         }
 

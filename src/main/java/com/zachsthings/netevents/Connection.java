@@ -27,6 +27,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 /**
  * Represents a single connection. Forwarder wraps this connection for reconnecting, but once this is closed it's closed permanently.
@@ -157,6 +158,7 @@ public class Connection implements Closeable {
             }
             payload.flip();
 
+            try {
             Packet packet;
             switch (opcode) {
                 case Opcodes.PASS_EVENT:
@@ -171,6 +173,9 @@ public class Connection implements Closeable {
             if (packet != null) {
                 plugin.debug("Received packet " + packet + " from " + conn.getRemoteAddress());
                 plugin.getHandlerQueue().queuePacket(packet, conn);
+            }
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Unable to read packet (id " + opcode + ") from " + conn.getRemoteAddress() + ", skipping", e);
             }
         }
     }
