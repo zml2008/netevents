@@ -64,7 +64,7 @@ class Forwarder implements Closeable {
         Connection.configureSocketChannel(chan);
         chan = plugin.getSocketWrapper().wrapSocket(chan);
 
-        final Connection conn = new Connection(plugin, chan);
+        final Connection conn = Connection.open(plugin, chan);
         if (!this.conn.compareAndSet(null, conn)) { // Already been connected
             conn.close();
         } else {

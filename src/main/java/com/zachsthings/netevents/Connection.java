@@ -39,21 +39,30 @@ class Connection implements Closeable {
     private final List<Runnable> closeListeners = new CopyOnWriteArrayList<Runnable>();
     // Connection objects
     private final SocketChannel chan;
-    private final OutputThread out;
-    private final InputThread in;
+    private OutputThread out;
+    private InputThread in;
     private final SocketAddress remoteAddress;
 
-    public Connection(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
+    private Connection(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
         this.plugin = plugin;
         this.chan = chan;
         this.remoteAddress = chan.getRemoteAddress();
         if (remoteAddress == null) {
             throw new IOException("Null remote address for " + chan);
         }
-        this.out = new OutputThread(this);
-        this.in = new InputThread(this, plugin);
+    }
+
+    private void startThreads() throws IOException {
+        this.out = new OutputThread();
+        this.in = new InputThread();
         out.start();
         in.start();
+    }
+
+    public static Connection open(NetEventsPlugin plugin, SocketChannel chan) throws IOException {
+        final Connection ret = new Connection(plugin, chan);
+        ret.startThreads();
+        return ret;
     }
 
     public void close() throws IOException {
@@ -97,11 +106,11 @@ class Connection implements Closeable {
         return plugin;
     }
 
-    public static class OutputThread extends IOThread {
+    public class OutputThread extends IOThread {
         private final BlockingDeque<Packet> sendQueue = new LinkedBlockingDeque<Packet>();
 
-        public OutputThread(Connection conn) throws IOException {
-            super("output", conn);
+        public OutputThread() throws IOException {
+            super("output", Connection.this);
         }
 
         @Override
@@ -128,12 +137,10 @@ class Connection implements Closeable {
         }
     }
 
-    public static class InputThread extends IOThread {
-        private final NetEventsPlugin plugin;
+    public class InputThread extends IOThread {
 
-        public InputThread(Connection conn, NetEventsPlugin plugin) throws IOException {
-            super("input", conn);
-            this.plugin = plugin;
+        public InputThread() throws IOException {
+            super("input", Connection.this);
         }
 
         @Override
