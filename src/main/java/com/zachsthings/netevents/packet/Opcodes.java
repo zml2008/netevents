@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zachsthings.netevents;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
+package com.zachsthings.netevents.packet;
 
 /**
- * Represents a packet object. Provides methods to encode and handle. Decoding is handled separately because deserialization is annoying
+ * Packet opcodes used by NetEvents. We don't have that many or we'd do something fancier.
  */
-interface Packet {
-    public byte getOpcode();
-    public void handle(Connection conn);
-    public ByteBuffer write() throws IOException;
+public class Opcodes {
+    public static final byte SERVER_ID = 0;
+    public static final byte PASS_EVENT = 1;
+    public static final byte DISCONNECT = 3;
+
 }

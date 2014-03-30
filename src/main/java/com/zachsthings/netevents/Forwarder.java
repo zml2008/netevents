@@ -15,11 +15,16 @@
  */
 package com.zachsthings.netevents;
 
+import com.zachsthings.netevents.packet.DisconnectPacket;
+import com.zachsthings.netevents.packet.Packet;
+import com.zachsthings.netevents.packet.ServerIDPacket;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -27,10 +32,11 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * Wraps connection a lot, but handles the logic of state tracking in {@link com.zachsthings.netevents.NetEventsPlugin} and autoreconnect.
  */
-class Forwarder implements Closeable {
+public class Forwarder implements Closeable {
     private final NetEventsPlugin plugin;
     private final AtomicReference<Connection> conn = new AtomicReference<>();
     private SocketAddress reconnectAddress;
+    private final AtomicReference<UUID> remoteServerUUID = new AtomicReference<>();
 
     public Forwarder(NetEventsPlugin plugin) {
         this.plugin = plugin;
@@ -64,18 +70,30 @@ class Forwarder implements Closeable {
         Connection.configureSocketChannel(chan);
         chan = plugin.getSocketWrapper().wrapSocket(chan);
 
-        final Connection conn = Connection.open(plugin, chan);
+        final Connection conn = Connection.open(this, chan);
         if (!this.conn.compareAndSet(null, conn)) { // Already been connected
             conn.close();
         } else {
+            // Successfully connected, now perform initialization
             conn.addCloseListener(new ConnectionCloseListener());
             reconnectAddress = null; // Clear it out in case of previous connection
+            write(new ServerIDPacket(plugin.getServerUUID()));
             plugin.debug("Connected to " + chan.getRemoteAddress());
         }
     }
 
     public boolean isReconnectable() {
         return this.reconnectAddress != null;
+    }
+
+    public UUID getRemoteServerUUID() {
+        return remoteServerUUID.get();
+    }
+
+    public void setRemoteServerUUID(UUID remoteUid) {
+        if (!remoteServerUUID.compareAndSet(null, remoteUid)) {
+            throw new IllegalStateException("Server UUID has already been set for " + this);
+        }
     }
 
     boolean reconnect() throws IOException {
@@ -89,10 +107,10 @@ class Forwarder implements Closeable {
 
     public void close() throws IOException {
         final Connection conn = this.conn.get();
+        reconnectAddress = null;
         if (conn != null) {
             conn.close();
         }
-        reconnectAddress = null;
     }
 
     public void write(Packet packet) {
@@ -100,6 +118,18 @@ class Forwarder implements Closeable {
         if (conn != null) {
             conn.write(packet);
         }
+    }
+
+    public void disconnect(String reason) throws IOException {
+        final Connection conn = this.conn.get();
+        if (conn != null) {
+            plugin.getLogger().info("Disconnecting from " + conn + ": " + reason);
+            conn.writeAndClose(new DisconnectPacket(reason, false));
+        }
+    }
+
+    public NetEventsPlugin getPlugin() {
+        return plugin;
     }
 
     public boolean isActive() {

@@ -126,6 +126,13 @@ public class WrappedSocketChannel extends SocketChannel {
     }
 
     @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                "wrappee=" + wrappee +
+                '}';
+    }
+
+    @Override
     protected void implConfigureBlocking(boolean block) throws IOException {
         wrappee.configureBlocking(block);
     }

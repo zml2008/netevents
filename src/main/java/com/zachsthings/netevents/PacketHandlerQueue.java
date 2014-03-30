@@ -15,6 +15,7 @@
  */
 package com.zachsthings.netevents;
 
+import com.zachsthings.netevents.packet.Packet;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.LinkedList;
@@ -27,9 +28,9 @@ import java.util.logging.Level;
 class PacketHandlerQueue implements Runnable {
     private static class QueueEntry {
         private final Packet pkt;
-        private final Connection conn;
+        private final Forwarder conn;
 
-        private QueueEntry(Packet pkt, Connection conn) {
+        private QueueEntry(Packet pkt, Forwarder conn) {
             this.pkt = pkt;
             this.conn = conn;
         }
@@ -55,7 +56,7 @@ class PacketHandlerQueue implements Runnable {
         }
     }
 
-    public void queuePacket(Packet pack, Connection conn) {
+    public void queuePacket(Packet pack, Forwarder conn) {
         toProcess.add(new QueueEntry(pack, conn));
     }
 

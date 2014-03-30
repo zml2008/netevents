@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zachsthings.netevents;
+package com.zachsthings.netevents.packet;
 
+import com.zachsthings.netevents.Forwarder;
 import org.bukkit.event.Event;
 
 import java.io.*;
@@ -26,7 +27,7 @@ import java.util.UUID;
  *
  * All events must implement both the zero-args and argument-containing constructors
  */
-class EventPacket implements Packet {
+public class EventPacket implements Packet {
     private final UUID uid;
     private final Event sendEvent;
 
@@ -76,8 +77,8 @@ class EventPacket implements Packet {
     }
 
     @Override
-    public void handle(Connection conn) {
-        conn.getPlugin().callEvent(this, conn);
+    public void handle(Forwarder forwarder) {
+        forwarder.getPlugin().callEvent(this, forwarder);
     }
 
     public ByteBuffer write() throws IOException {

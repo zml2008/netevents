@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zachsthings.netevents;
+package com.zachsthings.netevents.packet;
+
+import com.zachsthings.netevents.Forwarder;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
- * Packet opcodes used by NetEvents. We don't have that many or we'd do something fancier.
+ * Represents a packet object. Provides methods to encode and handle. Decoding is handled separately because deserialization is annoying
  */
-class Opcodes {
-    public static final byte PASS_EVENT = 1;
-
+public interface Packet {
+    public byte getOpcode();
+    public void handle(Forwarder session) throws IOException;
+    public ByteBuffer write() throws IOException;
 }

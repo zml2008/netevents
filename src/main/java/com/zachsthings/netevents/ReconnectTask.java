@@ -39,10 +39,14 @@ class ReconnectTask implements Runnable {
     @Override
     public void run() {
         final boolean runAll = runAllNext.compareAndSet(true, false);
-        for (ReconnectItem item : taskQueue) {
+        for (Iterator<ReconnectItem> it = taskQueue.iterator(); it.hasNext();) {
+            ReconnectItem item = it.next();
             if (item.countPassed++ == item.runCount || runAll) {
                 try {
-                    item.reconnect.reconnect();
+                    if (!item.reconnect.reconnect()) {
+                        item.reconnect.getPlugin().removeForwarder(item.reconnect);
+                    }
+                    it.remove();
                 } catch (IOException e) { // Failed to connect, go again.
                     item.runCount++;
                     item.countPassed = 0;

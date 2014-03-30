@@ -15,6 +15,7 @@
  */
 package com.zachsthings.netevents;
 
+import com.zachsthings.netevents.packet.EventPacket;
 import com.zachsthings.netevents.sec.AESSocketWrapper;
 import com.zachsthings.netevents.sec.SocketWrapper;
 import com.zachsthings.netevents.ping.PingListener;
@@ -33,9 +34,9 @@ import java.util.logging.Level;
  * Main class for NetEvents
  */
 public class NetEventsPlugin extends JavaPlugin {
-	/**
-	 * Number of event UUID's to keep to prevent duplicate events. Greater number potentially decreases duplicate events received.
-	 */
+    /**
+     * Number of event UUID's to keep to prevent duplicate events. Greater number potentially decreases duplicate events received.
+     */
     public static final int EVENT_CACHE_COUNT = 5000;
 
     private final LinkedList<UUID> processedEvents = new LinkedList<>();
@@ -100,11 +101,11 @@ public class NetEventsPlugin extends JavaPlugin {
         this.config = new NetEventsConfig(getConfig());
     }
 
-	/**
-	 * Reload the configuration for this plugin.
-	 *
-	 * @throws IOException When an error occurs while working with connections
-	 */
+    /**
+     * Reload the configuration for this plugin.
+     *
+     * @throws IOException When an error occurs while working with connections
+     */
     public void reload() throws IOException {
         close();
         reloadConfig();
@@ -141,20 +142,20 @@ public class NetEventsPlugin extends JavaPlugin {
         }
     }
 
-	/**
-	 * Set whether debug logging is enabled.
-	 *
-	 * @see #debug(String)
-	 * @param debug The value to set debug logging to
-	 */
+    /**
+     * Set whether debug logging is enabled.
+     *
+     * @see #debug(String)
+     * @param debug The value to set debug logging to
+     */
     public void setDebugMode(boolean debug) {
         debugMode = debug;
     }
 
-	/**
-	 *
-	 * @return Whether or not debug logging is enabled
-	 */
+    /**
+     *
+     * @return Whether or not debug logging is enabled
+     */
     public boolean hasDebugMode() {
         return debugMode;
     }
@@ -186,48 +187,59 @@ public class NetEventsPlugin extends JavaPlugin {
         forwarders.remove(f.getRemoteAddress());
     }
 
-    Collection<Forwarder> getForwarders() {
-        return forwarders.values();
+    /**
+     * Returns a list of forwarders currently connected to this server.
+     * @return Immutable list of currently connected forwarders
+     */
+    public Collection<Forwarder> getForwarders() {
+        return Collections.unmodifiableCollection(forwarders.values());
     }
 
 
-	/**
-	 * Returns a persistent unique ID for this server.
-	 * Useful for identifying this server in the network.
-	 * Persisted to {@code {@link #getDataFolder()}/uuid.dat}.
-	 *
-	 * @return a unique id for this server.
-	 */
+    /**
+     * Returns a persistent unique ID for this server.
+     * Useful for identifying this server in the network.
+     * Persisted to {@code {@link #getDataFolder()}/uuid.dat}.
+     *
+     * @return a unique id for this server.
+     */
     public UUID getServerUUID() {
         return uidHolder.get();
     }
 
-	/**
-	 * Return the address this server is currently listening on for NetEvents connections.
-	 *
-	 * @return The listening address
-	 */
+    /**
+     * Return the address this server is currently listening on for NetEvents connections.
+     *
+     * @return The listening address
+     */
     public SocketAddress getBoundAddress() {
         return receiver.getBoundAddress();
     }
 
-	/**
-	 * Calls the passed event on this server and forwards it to all
-	 * connected servers to be called remotely.
-	 *
-	 * Events must be serializable.
-	 * Remote servers will ignore events they do not know the class of.
-	 *
-	 * @param event The event to call
-	 * @param <T> The event type
-	 * @return The event (same as passed, just here for utility)
-	 */
+    /**
+     * Calls the passed event on this server and forwards it to all
+     * connected servers to be called remotely.
+     *
+     * Events must be serializable.
+     * Remote servers will ignore events they do not know the class of.
+     *
+     * @param event The event to call
+     * @param <T> The event type
+     * @return The event (same as passed, just here for utility)
+     */
     public <T extends Event & Serializable> T callEvent(T event) {
         callEvent(new EventPacket(event), null);
         return event;
     }
 
-    void callEvent(EventPacket packet, Connection ignoreTo) {
+    /**
+     * Internal method to allow additional flexibility from events.
+     *
+     * @see {@link #callEvent(org.bukkit.event.Event)} to send events
+     * @param packet The event packet to send
+     * @param ignoreTo The forwarder to not send this packet to. This way we avoid
+     */
+    public synchronized void callEvent(EventPacket packet, Forwarder ignoreTo) {
         while (processedEvents.size() > EVENT_CACHE_COUNT) {
             processedEvents.removeLast();
         }
@@ -238,7 +250,7 @@ public class NetEventsPlugin extends JavaPlugin {
         getServer().getPluginManager().callEvent(packet.getSendEvent());
 
         for (Forwarder f : forwarders.values()) {
-            if (ignoreTo != null && ignoreTo.getRemoteAddress().equals(f.getRemoteAddress())) {
+            if (ignoreTo != null && ignoreTo.equals(f)) {
                 continue;
             }
             f.write(packet);
