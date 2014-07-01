@@ -18,6 +18,7 @@ package com.zachsthings.netevents;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -35,20 +36,21 @@ class ReconnectTask implements Runnable {
 
     private final AtomicBoolean runAllNext = new AtomicBoolean();
     private final LinkedList<ReconnectItem> taskQueue = new LinkedList<ReconnectItem>();
+	private final Random rng = new Random();
 
     @Override
     public void run() {
         final boolean runAll = runAllNext.compareAndSet(true, false);
         for (Iterator<ReconnectItem> it = taskQueue.iterator(); it.hasNext();) {
             ReconnectItem item = it.next();
-            if (item.countPassed++ == item.runCount || runAll) {
+            if (item.countPassed++ >= item.runCount || runAll) {
                 try {
                     if (!item.reconnect.reconnect()) {
                         item.reconnect.getPlugin().removeForwarder(item.reconnect);
                     }
                     it.remove();
                 } catch (IOException e) { // Failed to connect, go again.
-                    item.runCount++;
+                    item.runCount += rng.nextInt(5);
                     item.countPassed = 0;
                 }
             }
