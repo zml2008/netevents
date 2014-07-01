@@ -81,11 +81,6 @@ public class NetEventsPlugin extends JavaPlugin {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        return true;
-    }
-
-    @Override
     public void onDisable() {
         try {
             close();

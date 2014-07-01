@@ -39,7 +39,7 @@ public class ServerIDPacket implements Packet {
     @Override
     public void handle(Forwarder session) throws IOException {
         for (Forwarder f : session.getPlugin().getForwarders()) {
-            if (serverUid.equals(f.getRemoteServerUUID())) {
+            if (f != session && serverUid.equals(f.getRemoteServerUUID())) {
                 session.disconnect("This server already connected!");
                 return;
             }
