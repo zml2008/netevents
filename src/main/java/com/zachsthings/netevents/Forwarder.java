@@ -45,16 +45,17 @@ public class Forwarder implements Closeable {
     class ConnectionCloseListener implements Runnable {
         @Override
         public void run() {
-            conn.set(null);
             if (Forwarder.this.reconnectAddress != null) {
                 plugin.getReconnectTask().schedule(Forwarder.this);
             } else {
                 plugin.removeForwarder(Forwarder.this);
             }
+            conn.set(null);
         }
     }
 
     public void connect(SocketAddress addr) throws IOException {
+        remoteServerUUID.set(null);
         reconnectAddress = addr;
         final SocketChannel sock;
         try {
